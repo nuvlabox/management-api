@@ -19,9 +19,16 @@ ca_file = "ca.pem"
 
 nuvlabox_api_certs_folder = "{}/nuvlabox-api".format(data_volume)
 
+ssh_key_file = "{}/nuvlabox-ssh-key".format(data_volume)
 
-def change_operational_status(status):
-    """ Requests the agent to change the operational status """
+return_404 = {"status": 404,
+              "message": "undefined"}
 
-    url = "http://agent:5000/api/status?value={}".format(status)
-    requests.get(url)
+return_405 = {"status": 405,
+              "message": "undefined"}
+
+return_200 = {"status": 200,
+              "message": "undefined"}
+
+return_201 = {"status": 201,
+              "message": "undefined"}
