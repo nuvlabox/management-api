@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  system-manager:
+  management-api:
     build: .
     volumes:
       - /proc/sysrq-trigger:/sysrq
