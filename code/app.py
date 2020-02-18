@@ -15,6 +15,7 @@ import sys
 import os
 import subprocess
 import multiprocessing
+import time
 from flask import Flask, redirect, request, jsonify, url_for
 from management_api.common import utils
 from management_api import Manage
@@ -65,42 +66,20 @@ def generate_ssh_key():
         log.error("Cannot generate SSH key...will move on, but SSH will be unavailable until the NuvlaBox is restarted")
 
 
-def generate_certificates():
-    """ Generates self signed certificate """
+def wait_for_certificates():
+    """ If there are already TLS credentials for the compute-api, then re-use them """
 
     log = logging.getLogger("api")
+    log.info("Re-using compute-api SSL certificates for NuvlaBox Management API")
+    log.info("Waiting for compute-api to generate SSL certificates...")
 
-    if os.path.exists(utils.nuvlabox_api_certs_folder):
-        # it already exists, then just check of the certificates
-        if os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) and \
-                os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) and \
-                os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_cert_file)) and \
-                os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_key_file)) and \
-                os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.ca_file)):
-            # if all certificated already exist, then we are good...this was just a soft restart
-            log.info("NuvlaBox API certificates already exist.")
-            return
-        else:
-            # somehow not all certs are there...let's rebuild them all from scratch
+    while not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) and \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) and \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_cert_file)) and \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_key_file)) and \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.ca_file)):
 
-            log.warning("Re-generating all NuvlaBox API certificates...")
-    else:
-        os.mkdir(utils.nuvlabox_api_certs_folder)
-        log.info("Generating NuvlaBox API certificates for the first time")
-
-    try:
-        subprocess.check_output(["./generate-nuvlabox-api-certs.sh",
-                                 "--certs-folder", utils.nuvlabox_api_certs_folder,
-                                 "--server-key", utils.server_key_file,
-                                 "--server-cert", utils.server_cert_file,
-                                 "--client-key", utils.client_key_file,
-                                 "--client-cert", utils.client_cert_file])
-    except FileNotFoundError:
-        logging.exception("Command to generate NuvlaBox API certs not found!")
-        raise
-    except (OSError, subprocess.CalledProcessError):
-        logging.exception("Failed to generate NuvlaBox API certs!")
-        raise
+        time.sleep(3)
 
 
 @app.errorhandler(404)
@@ -148,13 +127,14 @@ if __name__ == "__main__":
     set_logger()
     log = logging.getLogger("api")
 
-    # Generate NB API certificates
-    generate_certificates()
+    # Let's re-use the certificates already generated for the compute-api
+    wait_for_certificates()
 
     # Generate SSH key
     generate_ssh_key()
 
     workers = multiprocessing.cpu_count()
+    logging.info("Starting NuvlaBox Management API!")
     try:
         subprocess.check_output(["gunicorn", "--bind=0.0.0.0:5001", "--threads=2",
                                  "--worker-class=gthread", "--workers={}".format(workers), "--reload",
