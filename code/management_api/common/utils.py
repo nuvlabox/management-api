@@ -4,6 +4,25 @@
 """ Common set of managament methods to be used by
  the different management api classes """
 
+import os
+
+nuvla_endpoint_raw = os.environ["NUVLA_ENDPOINT"] if "NUVLA_ENDPOINT" in os.environ else "nuvla.io"
+while nuvla_endpoint_raw[-1] == "/":
+    nuvla_endpoint_raw = nuvla_endpoint_raw[:-1]
+
+nuvla_endpoint_insecure_raw = os.environ["NUVLA_ENDPOINT_INSECURE"] if "NUVLA_ENDPOINT_INSECURE" in os.environ else False
+if isinstance(nuvla_endpoint_insecure_raw, str):
+    if nuvla_endpoint_insecure_raw.lower() == "false":
+        nuvla_endpoint_insecure_raw = False
+    else:
+        nuvla_endpoint_insecure_raw = True
+else:
+    nuvla_endpoint_insecure_raw = bool(nuvla_endpoint_insecure_raw)
+
+nuvla_endpoint_insecure = nuvla_endpoint_insecure_raw
+
+nuvla_endpoint = nuvla_endpoint_raw.replace("https://", "")
+
 data_volume = "/srv/nuvlabox/shared"
 log_filename = "management-api.log"
 
@@ -28,3 +47,13 @@ return_200 = {"status": 200,
 
 return_201 = {"status": 201,
               "message": "undefined"}
+
+return_400 = {"status": 400,
+              "message": "undefined"}
+
+return_500 = {"status": 500,
+              "message": "undefined"}
+
+return_generic = {"status": "placeholder",
+                  "message": "undefined"}
+

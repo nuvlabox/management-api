@@ -16,6 +16,7 @@ import os
 import subprocess
 import multiprocessing
 import time
+import json
 from flask import Flask, redirect, request, jsonify, url_for
 from management_api.common import utils
 from management_api import Manage
@@ -119,6 +120,49 @@ def reboot():
     thread.start()
 
     return jsonify(dict(utils.return_200, message="rebooting NuvlaBox machine...")), utils.return_200['status']
+
+
+@app.route("/api/data-source-mjpg/enable", methods=['POST'])
+def enable_data_source_mjpg():
+    # enable data gateway for mjpg
+    #
+    # payload looks like:
+    # { "id": str, "resolution": str, "fps": int, "stream-name": str, "video-device": str }
+
+    payload = json.loads(request.data)
+    mandatory_keys = {"id", "video-device"}
+
+    if not mandatory_keys <= set(payload.keys()):
+        return jsonify(dict(utils.return_400, message="Missing mandatory attributes - %s" % mandatory_keys)), \
+               utils.return_400['status']
+
+    id = payload['id']
+    try:
+        name = payload['stream-name']
+    except KeyError:
+        name = id
+
+    try:
+        resolution = payload['resolution']
+    except KeyError:
+        resolution = "1280x720"
+
+    try:
+        fps = int(payload['fps'])
+    except KeyError:
+        fps = 15
+
+    try:
+        local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(name,
+                                                                                         payload['video-device'],
+                                                                                         resolution,
+                                                                                         fps)
+        if container.status.lower() == 'created':
+            Manage.update_peripheral_resource(id, local_data_gateway_endpoint)
+        else:
+            return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
+    except Exception as e:
+        return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
 
 
 if __name__ == "__main__":

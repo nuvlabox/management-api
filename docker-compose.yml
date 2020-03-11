@@ -10,6 +10,9 @@ services:
       - nuvlabox.component=True
       - nuvlabox.deployment=production
     restart: on-failure
+    environment:
+      - NUVLA_ENDPOINT=${NUVLA_ENDPOINT:-nuvla.io}
+      - NUVLA_ENDPOINT_INSECURE=False
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001"]
       interval: 30s
