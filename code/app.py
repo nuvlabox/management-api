@@ -159,6 +159,7 @@ def enable_data_source_mjpg():
                                                                                          fps)
         if container.status.lower() == 'created':
             Manage.update_peripheral_resource(id, local_data_gateway_endpoint)
+            return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
         else:
             return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
     except Exception as e:

@@ -6,6 +6,7 @@
 import os
 import time
 import docker
+import json
 from management_api.common import utils
 from nuvla.api import Api
 
@@ -82,3 +83,20 @@ def update_peripheral_resource(id, local_data_gateway_endpoint, data_gateway_ena
     api = Api(endpoint='https://{}'.format(utils.nuvla_endpoint),
               insecure=utils.nuvla_endpoint_insecure, reauthenticate=True)
 
+    try:
+        with open(utils.activation_flag) as a:
+            user_info = json.loads(a.read())
+    except FileNotFoundError:
+        raise Exception("Cannot authenticate back with Nuvla")
+
+    api.login_apikey(user_info['api-key'], user_info['secret-key'])
+
+    payload = {
+        "local-data-gateway-endpoint": local_data_gateway_endpoint,
+        "data-gateway-enabled": data_gateway_enabled
+    }
+
+    if raw_sample:
+        payload['raw-data-sample'] = raw_sample
+
+    api._cimi_put(id, json=payload)

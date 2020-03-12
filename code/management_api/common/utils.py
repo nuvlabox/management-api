@@ -26,6 +26,8 @@ nuvla_endpoint = nuvla_endpoint_raw.replace("https://", "")
 data_volume = "/srv/nuvlabox/shared"
 log_filename = "management-api.log"
 
+activation_flag = "{}/.activated".format(data_volume)
+
 server_cert_file = "server-cert.pem"
 server_key_file = "server-key.pem"
 client_cert_file = "cert.pem"
