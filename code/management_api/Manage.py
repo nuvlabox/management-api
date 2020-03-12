@@ -51,6 +51,7 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
     traefik_router_name = "traefik.http.routers.mjpg-streamer-{}-router".format(name)
 
     labels = {"nuvlabox.component": "False",
+              "nuvlabox.data-source-container": "True",
               "traefik.enable": "true",
               "{}.rule".format(traefik_router_name): "Host(`data-gateway`) && PathPrefix(`{}`)".format(path_prefix),
               "{}.entrypoints".format(traefik_router_name): "web",
