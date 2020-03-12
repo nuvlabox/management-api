@@ -17,6 +17,7 @@ import subprocess
 import multiprocessing
 import time
 import json
+import nuvla
 from flask import Flask, redirect, request, jsonify, url_for
 from management_api.common import utils
 from management_api import Manage
@@ -159,7 +160,7 @@ def enable_data_source_mjpg():
         else:
             return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
     except Exception as e:
-        return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/disable", methods=['POST'])
@@ -180,11 +181,21 @@ def disable_data_source_mjpg():
 
     try:
         Manage.stop_container_data_source_mjpg(name)
-        Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
+        try:
+            Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
+        except nuvla.api.api.NuvlaError as e:
+            if e.response.status_code == 404:
+                # this action was triggered by the deletion of the peripheral,
+                # so it's normal that it does not exist anymore
+                pass
+            else:
+                # try again. If still fails, then raise the exception
+                Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
+
         return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % id)), \
                utils.return_200['status']
     except Exception as e:
-        return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_400['status']
 
 
 if __name__ == "__main__":
