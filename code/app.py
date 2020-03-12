@@ -127,7 +127,7 @@ def enable_data_source_mjpg():
     # enable data gateway for mjpg
     #
     # payload looks like:
-    # { "id": str, "resolution": str, "fps": int, "stream-name": str, "video-device": str }
+    # { "id": str, "resolution": str, "fps": int, "video-device": str }
 
     payload = json.loads(request.data)
     mandatory_keys = {"id", "video-device"}
@@ -136,11 +136,7 @@ def enable_data_source_mjpg():
         return jsonify(dict(utils.return_400, message="Missing mandatory attributes - %s" % mandatory_keys)), \
                utils.return_400['status']
 
-    id = payload['id']
-    try:
-        name = payload['stream-name']
-    except KeyError:
-        name = id
+    resource_id = payload['id']
 
     try:
         resolution = payload['resolution']
@@ -153,15 +149,35 @@ def enable_data_source_mjpg():
         fps = 15
 
     try:
-        local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(name,
+        local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(resource_id,
                                                                                          payload['video-device'],
                                                                                          resolution,
                                                                                          fps)
         if container.status.lower() == 'created':
-            Manage.update_peripheral_resource(id, local_data_gateway_endpoint)
+            Manage.update_peripheral_resource(resource_id, local_data_gateway_endpoint)
             return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
         else:
             return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
+    except Exception as e:
+        return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
+
+
+@app.route("/api/data-source-mjpg/disable", methods=['POST'])
+def disable_data_source_mjpg():
+    # disable data gateway for mjpg
+    #
+    # payload looks like:
+    # { "id": str }
+
+    payload = json.loads(request.data)
+    mandatory_keys = {"id"}
+
+    if not mandatory_keys <= set(payload.keys()):
+        return jsonify(dict(utils.return_400, message="Missing mandatory attributes - %s" % mandatory_keys)), \
+               utils.return_400['status']
+
+    try:
+        Manage.stop_container_data_source_mjpg(payload['id'])
     except Exception as e:
         return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
 

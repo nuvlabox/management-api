@@ -70,6 +70,18 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
                                               )
 
 
+def stop_container_data_source_mjpg(name):
+    """ stops mjpg streamer container by name
+
+    :param name: unique name of the container
+
+    :returns
+    """
+    client = docker.from_env()
+
+    client.containers.get(name).remove(force=True)
+
+
 def update_peripheral_resource(id, local_data_gateway_endpoint, data_gateway_enabled=True, raw_sample=None):
     """ sends a PUT request to Nuvla to update the peripheral resource whenever a data gateway action takes place
 
