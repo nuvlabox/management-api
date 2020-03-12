@@ -136,7 +136,7 @@ def enable_data_source_mjpg():
         return jsonify(dict(utils.return_400, message="Missing mandatory attributes - %s" % mandatory_keys)), \
                utils.return_400['status']
 
-    resource_id = payload['id']
+    name = payload['id'].split("/")[-1]
 
     try:
         resolution = payload['resolution']
@@ -149,12 +149,12 @@ def enable_data_source_mjpg():
         fps = 15
 
     try:
-        local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(resource_id,
+        local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(name,
                                                                                          payload['video-device'],
                                                                                          resolution,
                                                                                          fps)
         if container.status.lower() == 'created':
-            Manage.update_peripheral_resource(resource_id, local_data_gateway_endpoint)
+            Manage.update_peripheral_resource(name, local_data_gateway_endpoint)
             return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
         else:
             return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
@@ -176,8 +176,10 @@ def disable_data_source_mjpg():
         return jsonify(dict(utils.return_400, message="Missing mandatory attributes - %s" % mandatory_keys)), \
                utils.return_400['status']
 
+    name = payload['id'].split("/")[-1]
+
     try:
-        Manage.stop_container_data_source_mjpg(payload['id'])
+        Manage.stop_container_data_source_mjpg(name)
     except Exception as e:
         return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
 
