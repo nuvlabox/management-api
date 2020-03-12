@@ -154,7 +154,7 @@ def enable_data_source_mjpg():
                                                                                          resolution,
                                                                                          fps)
         if container.status.lower() == 'created':
-            Manage.update_peripheral_resource(name, local_data_gateway_endpoint)
+            Manage.update_peripheral_resource(payload['id'], local_data_gateway_endpoint=local_data_gateway_endpoint)
             return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
         else:
             return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
@@ -180,6 +180,9 @@ def disable_data_source_mjpg():
 
     try:
         Manage.stop_container_data_source_mjpg(name)
+        Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
+        return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % id)), \
+               utils.return_200['status']
     except Exception as e:
         return jsonify(dict(utils.return_generic, status=e.status_code, message=str(e.explanation))), e.status_code
 

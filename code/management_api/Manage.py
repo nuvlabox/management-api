@@ -83,16 +83,8 @@ def stop_container_data_source_mjpg(name):
     client.containers.get(name).remove(force=True)
 
 
-def update_peripheral_resource(id, local_data_gateway_endpoint, data_gateway_enabled=True, raw_sample=None):
-    """ sends a PUT request to Nuvla to update the peripheral resource whenever a data gateway action takes place
-
-    :param id: UUID of the peripheral resource in nuvla
-    :param local_data_gateway_endpoint: data gateway url for accessing the routed data
-    :param data_gateway_enabled: whether data dateway is enabled or not
-    :param raw_sample: raw data sample
-
-    :returns """
-
+def nuvla_api():
+    """ Initialize API instance """
     api = Api(endpoint='https://{}'.format(utils.nuvla_endpoint),
               insecure=utils.nuvla_endpoint_insecure, reauthenticate=True)
 
@@ -104,12 +96,34 @@ def update_peripheral_resource(id, local_data_gateway_endpoint, data_gateway_ena
 
     api.login_apikey(user_info['api-key'], user_info['secret-key'])
 
+    return api
+
+
+def update_peripheral_resource(id, local_data_gateway_endpoint=None, data_gateway_enabled=True, raw_sample=None):
+    """ sends a PUT request to Nuvla to update the peripheral resource whenever a data gateway action takes place
+
+    :param id: UUID of the peripheral resource in nuvla
+    :param local_data_gateway_endpoint: data gateway url for accessing the routed data
+    :param data_gateway_enabled: whether data dateway is enabled or not
+    :param raw_sample: raw data sample
+
+    :returns """
+
+    api = nuvla_api()
+    kwargs = {'select': []}
+
     payload = {
-        "local-data-gateway-endpoint": local_data_gateway_endpoint,
         "data-gateway-enabled": data_gateway_enabled
     }
 
+    if local_data_gateway_endpoint:
+        payload['local-data-gateway-endpoint'] = local_data_gateway_endpoint
+    else:
+        kwargs['select'].append("local-data-gateway-endpoint")
+
     if raw_sample:
         payload['raw-data-sample'] = raw_sample
+    else:
+        kwargs['select'].append("raw-data-sample")
 
-    api._cimi_put(id, json=payload)
+    api._cimi_put(id, json=payload, params=kwargs)
