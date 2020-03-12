@@ -44,7 +44,7 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
                                                                                        resolution,
                                                                                        fps)
 
-    path_prefix = "/video/{}".format(name)
+    path_prefix = "http://data-gateway/video/{}".format(name)
 
     devices = ["{}:{}".format(video_device, video_device)]
 
