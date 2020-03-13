@@ -179,6 +179,7 @@ def disable_data_source_mjpg():
     #
     # payload looks like:
     # { "id": str }
+    log = logging.getLogger("api")
 
     payload = json.loads(request.data)
     mandatory_keys = {"id"}
