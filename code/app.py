@@ -129,6 +129,7 @@ def enable_data_source_mjpg():
     #
     # payload looks like:
     # { "id": str, "resolution": str, "fps": int, "video-device": str }
+    log = logging.getLogger("api")
 
     payload = json.loads(request.data)
     mandatory_keys = {"id", "video-device"}
@@ -149,17 +150,26 @@ def enable_data_source_mjpg():
     except KeyError:
         fps = 15
 
+    log.info("Received /api/data-source-mjpg/enable request with payload: {}".format(payload))
+
     try:
+        log.info("Launching MJPG streamer container {} for {}".format(name, payload['video-device']))
         local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(name,
                                                                                          payload['video-device'],
                                                                                          resolution,
                                                                                          fps)
         if container.status.lower() == 'created':
+            log.info("MJPG streamer {} successfully created. Updating {} in Nuvla".format(name, payload['id']))
+
             Manage.update_peripheral_resource(payload['id'], local_data_gateway_endpoint=local_data_gateway_endpoint)
             return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
         else:
-            return jsonify(dict(utils.return_400, message=container.logs())), utils.return_400['status']
+            log.error("MJPG streamer {} could not be started: {}".format(name, container.status))
+
+            return jsonify(dict(utils.return_400, message=container.logs().decode('utf-8'))), utils.return_400['status']
     except Exception as e:
+        log.exception("Cannot enable stream: {}".format(e))
+
         return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
@@ -179,22 +189,30 @@ def disable_data_source_mjpg():
 
     name = payload['id'].split("/")[-1]
 
+    log.info("Received /api/data-source-mjpg/disable request with payload: {}".format(payload))
+
     try:
+        log.info("Stopping container {}".format(name))
         Manage.stop_container_data_source_mjpg(name)
         try:
+            log.info("Updating {} in Nuvla".format(payload['id']))
             Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
         except nuvla.api.api.NuvlaError as e:
             if e.response.status_code == 404:
+                log.warning("Peripheral {} has already been delete in Nuvla. Nothing to update".format(payload['id']))
                 # this action was triggered by the deletion of the peripheral,
                 # so it's normal that it does not exist anymore
                 pass
             else:
+                logging.exception("Could not update {} in Nuvla. Trying a second time...".format(payload['id']))
                 # try again. If still fails, then raise the exception
                 Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
 
         return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % id)), \
                utils.return_200['status']
     except Exception as e:
+        log.exception("Cannot disable stream: {}".format(e))
+
         return jsonify(dict(utils.return_500, message=str(e))), utils.return_400['status']
 
 

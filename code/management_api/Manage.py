@@ -44,7 +44,7 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
                                                                                        resolution,
                                                                                        fps)
 
-    path_prefix = "http://data-gateway/video/{}".format(name)
+    path_prefix = "/video/{}".format(name)
 
     devices = ["{}:{}".format(video_device, video_device)]
 
@@ -60,15 +60,15 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
               "traefik.http.middlewares.{}-mid.replacepath.path".format(name): "/"
               }
 
-    return path_prefix, client.containers.run(data_gateway_images['data_source_mjpg'],
-                                              command=cmd,
-                                              detach=True,
-                                              name=name,
-                                              devices=devices,
-                                              labels=labels,
-                                              network="nuvlabox-shared-network",
-                                              restart_policy={"Name": "always"}
-                                              )
+    return "http://data-gateway" + path_prefix, client.containers.run(data_gateway_images['data_source_mjpg'],
+                                                                      command=cmd,
+                                                                      detach=True,
+                                                                      name=name,
+                                                                      devices=devices,
+                                                                      labels=labels,
+                                                                      network="nuvlabox-shared-network",
+                                                                      restart_policy={"Name": "always"}
+                                                                      )
 
 
 def stop_container_data_source_mjpg(name):

@@ -6,6 +6,8 @@ services:
     volumes:
       - /proc/sysrq-trigger:/sysrq
       - ${HOME}/.ssh/authorized_keys:/rootfs/.ssh/authorized_keys
+      - nuvlabox-db:/srv/nuvlabox/shared
+      - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - nuvlabox.component=True
       - nuvlabox.deployment=production
