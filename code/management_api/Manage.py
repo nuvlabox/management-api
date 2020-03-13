@@ -60,15 +60,16 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
               "traefik.http.middlewares.{}-mid.replacepath.path".format(name): "/"
               }
 
-    return "http://data-gateway" + path_prefix, client.containers.run(data_gateway_images['data_source_mjpg'],
-                                                                      command=cmd,
-                                                                      detach=True,
-                                                                      name=name,
-                                                                      devices=devices,
-                                                                      labels=labels,
-                                                                      network="nuvlabox-shared-network",
-                                                                      restart_policy={"Name": "always"}
-                                                                      )
+    streaming_url = 'http://data-gateway' + path_prefix + '?action=stream'
+    return streaming_url, client.containers.run(data_gateway_images['data_source_mjpg'],
+                                                command=cmd,
+                                                detach=True,
+                                                name=name,
+                                                devices=devices,
+                                                labels=labels,
+                                                network="nuvlabox-shared-network",
+                                                restart_policy={"Name": "always"}
+                                                )
 
 
 def stop_container_data_source_mjpg(name):
