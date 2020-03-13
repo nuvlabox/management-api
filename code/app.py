@@ -162,7 +162,7 @@ def enable_data_source_mjpg():
             log.info("MJPG streamer {} successfully created. Updating {} in Nuvla".format(name, payload['id']))
 
             Manage.update_peripheral_resource(payload['id'], local_data_gateway_endpoint=local_data_gateway_endpoint)
-            return jsonify(dict(utils.return_200, message=container.logs().decode('utf-8'))), utils.return_200['status']
+            return jsonify(dict(utils.return_200, message="MJPG streamer started!")), utils.return_200['status']
         else:
             log.error("MJPG streamer {} could not be started: {}".format(name, container.status))
 
@@ -209,7 +209,7 @@ def disable_data_source_mjpg():
                 # try again. If still fails, then raise the exception
                 Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
 
-        return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % payload['id'])), \
+        return jsonify(dict(utils.return_200, message="MJPG streamer stopped for %s" % payload['id'])), \
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot disable stream: {}".format(e))
