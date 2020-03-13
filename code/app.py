@@ -209,7 +209,7 @@ def disable_data_source_mjpg():
                 # try again. If still fails, then raise the exception
                 Manage.update_peripheral_resource(payload['id'], data_gateway_enabled=False)
 
-        return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % id)), \
+        return jsonify(dict(utils.return_200, message="MJPG data source stopped for %s" % payload['id'])), \
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot disable stream: {}".format(e))
