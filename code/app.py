@@ -162,7 +162,7 @@ def enable_data_source_mjpg():
             log.info("MJPG streamer {} successfully created. Updating {} in Nuvla".format(name, payload['id']))
 
             Manage.update_peripheral_resource(payload['id'], local_data_gateway_endpoint=local_data_gateway_endpoint)
-            return jsonify(dict(utils.return_200, message=container.logs())), utils.return_200['status']
+            return jsonify(dict(utils.return_200, message=container.logs().decode('utf-8'))), utils.return_200['status']
         else:
             log.error("MJPG streamer {} could not be started: {}".format(name, container.status))
 
