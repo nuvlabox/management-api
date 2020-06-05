@@ -55,17 +55,32 @@ def set_logger():
     root.addHandler(fh)
 
 
-def generate_ssh_key():
-    """ Create an SSH key, every time """
+def add_ssh_key(pubkey):
+    """ Adds a public SSH key to the host's root authorized keys
+
+    :param pubkey: string containing the full public key
+    """
 
     log = logging.getLogger("api")
 
-    log.info("Generating SSH keys for the NuvlaBox...")
-    os.system("echo 'y\n' | ssh-keygen -q -t rsa -N '' -f {} >/dev/null".format(utils.ssh_key_file))
-    public_key = "{}.pub".format(utils.ssh_key_file)
+    authorized_keys_file = "{}/authorized_keys".format(utils.host_ssh_folder)
 
-    if not os.path.exists(utils.ssh_key_file) or not os.path.exists(public_key):
-        log.error("Cannot generate SSH key...will move on, but SSH will be unavailable until the NuvlaBox is restarted")
+    with open(authorized_keys_file, 'a+') as ak:
+        ak.write("\n{}".format(pubkey))
+
+    log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, pubkey))
+
+
+def default_ssh_key():
+    """ Looks for the env var NUVLABOX_SSH_PUB_KEY, and add the respective
+     SSH public key to the host
+    """
+
+    log = logging.getLogger("api")
+
+    if utils.provided_pubkey:
+        log.info("Environment variable NUVLABOX_SSH_PUB_KEY found. Adding key to host user {}".format(utils.ssh_user))
+        add_ssh_key(utils.provided_pubkey)
 
 
 def wait_for_certificates():
@@ -226,8 +241,12 @@ if __name__ == "__main__":
     # Let's re-use the certificates already generated for the compute-api
     wait_for_certificates()
 
-    # Generate SSH key
-    generate_ssh_key()
+    # Check if there is an SSH key to be added to the host
+    try:
+        default_ssh_key()
+    except:
+        # it is not critical if we can't add it, for any reason
+        log.exception("Could add NUVLABOX_SSH_PUB_KEY to the host root. Moving on and discarding the provided key")
 
     workers = multiprocessing.cpu_count()
     logging.info("Starting NuvlaBox Management API!")
