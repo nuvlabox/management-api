@@ -243,7 +243,7 @@ if __name__ == "__main__":
         default_ssh_key()
     except:
         # it is not critical if we can't add it, for any reason
-        log.exception("Could add NUVLABOX_SSH_PUB_KEY to the host root. Moving on and discarding the provided key")
+        log.exception("Could not add NUVLABOX_SSH_PUB_KEY to the host root. Moving on and discarding the provided key")
 
     # Let's re-use the certificates already generated for the compute-api
     wait_for_certificates()
