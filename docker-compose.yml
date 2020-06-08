@@ -1,5 +1,9 @@
 version: "3.7"
 
+volumes:
+  nuvlabox-db:
+    driver: local
+
 services:
   management-api:
     build: .
