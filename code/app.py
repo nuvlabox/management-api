@@ -65,8 +65,14 @@ def add_ssh_key(pubkey):
 
     authorized_keys_file = "{}/authorized_keys".format(utils.host_ssh_folder)
 
+    with open(authorized_keys_file) as akr:
+        authorized_keys = akr.read()
+
     with open(authorized_keys_file, 'a+') as ak:
-        ak.write("\n{}".format(pubkey.replace('\\n', '\n')))
+        keys = pubkey.replace('\\n', '\n').splitlines()
+        for key in keys:
+            if key not in authorized_keys:
+                ak.write("\n{}".format(key))
 
     log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, pubkey))
 
