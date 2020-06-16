@@ -76,7 +76,7 @@ def add_ssh_key(pubkey):
         for key in keys:
             if key not in authorized_keys:
                 log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, key))
-                ak.write("\n{}".format(key))
+                ak.write("\n{}\n".format(key))
             else:
                 log.info("SSH public key {} already added to host. Skipping it".format(key))
 
