@@ -65,8 +65,11 @@ def add_ssh_key(pubkey):
 
     authorized_keys_file = "{}/authorized_keys".format(utils.host_ssh_folder)
 
-    with open(authorized_keys_file) as akr:
-        authorized_keys = akr.read()
+    if os.path.isfile(authorized_keys_file):
+        with open(authorized_keys_file) as akr:
+            authorized_keys = akr.read()
+    else:
+        authorized_keys = ''
 
     with open(authorized_keys_file, 'a+') as ak:
         keys = pubkey.replace('\\n', '\n').splitlines()
