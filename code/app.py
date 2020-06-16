@@ -75,8 +75,8 @@ def add_ssh_key(pubkey):
         keys = pubkey.replace('\\n', '\n').splitlines()
         for key in keys:
             if key not in authorized_keys:
-                log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, key))
                 ak.write("\n{}\n".format(key))
+                log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, key))
             else:
                 log.info("SSH public key {} already added to host. Skipping it".format(key))
 
@@ -100,10 +100,8 @@ def wait_for_certificates():
     log.info("Re-using compute-api SSL certificates for NuvlaBox Management API")
     log.info("Waiting for compute-api to generate SSL certificates...")
 
-    while not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_cert_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_key_file)) and \
+    while not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) or \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) or \
             not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.ca_file)):
 
         time.sleep(3)
@@ -146,6 +144,31 @@ def reboot():
     thread.start()
 
     return jsonify(dict(utils.return_200, message="rebooting NuvlaBox machine...")), utils.return_200['status']
+
+
+@app.route("/api/add-ssh-key", methods=['POST'])
+def accept_new_ssh_key():
+    # adds an SSH key into the host's authorized keys
+    # the payload is the public key is, raw
+    log = logging.getLogger("api")
+
+    payload = request.data.decode('UTF-8')
+
+    log.info("Received request to add public SSH key to host: {}".format(payload))
+
+    if not payload or not isinstance(payload, str):
+        return jsonify(dict(utils.return_400, message="Payload should match a valid public SSH key. Recevied: %s" %
+                            payload)), \
+               utils.return_400['status']
+
+    try:
+        add_ssh_key(payload)
+        return jsonify(dict(utils.return_200, message="Added public SSH key to host: {}".format(payload))), \
+               utils.return_200['status']
+    except Exception as e:
+        log.exception("Cannot add public SSH key to host: {}".format(e))
+
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/enable", methods=['POST'])
