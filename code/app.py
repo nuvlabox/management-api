@@ -78,8 +78,6 @@ def add_ssh_key(pubkey):
                 log.info("SSH public key {} already added to host. Skipping it".format(key))
 
 
-
-
 def default_ssh_key():
     """ Looks for the env var NUVLABOX_SSH_PUB_KEY, and add the respective
      SSH public key to the host
