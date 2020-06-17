@@ -55,13 +55,11 @@ def set_logger():
     root.addHandler(fh)
 
 
-def add_ssh_key(pubkey):
-    """ Adds a public SSH key to the host's root authorized keys
+def check_authorized_keys_file():
+    """ Makes the initial checks for SSH key management
+    Checks if the authorized keys file exists and gives back its content and path
 
-    :param pubkey: string containing the full public key
-    """
-
-    log = logging.getLogger("api")
+    :returns authorized_keys_file_content, authorized_keys_file_path: content and path of the authorized keys file"""
 
     authorized_keys_file = "{}/authorized_keys".format(utils.host_ssh_folder)
 
@@ -71,6 +69,19 @@ def add_ssh_key(pubkey):
     else:
         authorized_keys = ''
 
+    return authorized_keys, authorized_keys_file
+
+
+def add_ssh_key(pubkey):
+    """ Adds a public SSH key to the host's root authorized keys
+
+    :param pubkey: string containing the full public key
+    """
+
+    log = logging.getLogger("api")
+
+    authorized_keys, authorized_keys_file = check_authorized_keys_file()
+
     with open(authorized_keys_file, 'a+') as ak:
         keys = pubkey.replace('\\n', '\n').splitlines()
         for key in keys:
@@ -79,6 +90,31 @@ def add_ssh_key(pubkey):
                 log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, key))
             else:
                 log.info("SSH public key {} already added to host. Skipping it".format(key))
+
+
+def remove_ssh_key(pubkey):
+    """ Removes a public SSH key from the host's authorized keys
+
+    :param pubkey: string containing the full public key
+    """
+
+    log = logging.getLogger("api")
+
+    authorized_keys, authorized_keys_file = check_authorized_keys_file()
+
+    # in case the passed value has more than 1 public SSH key
+    revoke_keys = pubkey.replace('\\n', '\n').splitlines()
+    final_keys = authorized_keys.splitlines()
+    for key in revoke_keys:
+        if key in final_keys:
+            final_keys.remove(key)
+
+    if final_keys != authorized_keys.splitlines():
+        with open(authorized_keys_file, 'w') as ak:
+            ak.write("\n".join(final_keys))
+        log.info("SSH public key removed from host user {}: {}".format(utils.ssh_user, pubkey))
+    else:
+        log.info("The provided SSH public key {} is not in the host's authorized keys. Nothing to do".format(pubkey))
 
 
 def default_ssh_key():
@@ -167,6 +203,31 @@ def accept_new_ssh_key():
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot add public SSH key to host: {}".format(e))
+
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+
+
+@app.route("/api/revoke-ssh-key", methods=['POST'])
+def revoke_ssh_key():
+    # removes the SSH public key passed in the payload,
+    # from the host's authorized keys
+    log = logging.getLogger("api")
+
+    payload = request.data.decode('UTF-8')
+
+    log.info("Received request to revoke public SSH key from host: {}".format(payload))
+
+    if not payload or not isinstance(payload, str):
+        return jsonify(dict(utils.return_400, message="Payload should match a valid public SSH key. Recevied: %s" %
+                                                      payload)), \
+               utils.return_400['status']
+
+    try:
+        remove_ssh_key(payload)
+        return jsonify(dict(utils.return_200, message="Removed SSH key from host: {}".format(payload))), \
+               utils.return_200['status']
+    except Exception as e:
+        log.exception("Cannot revoke public SSH key from host: {}".format(e))
 
         return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
