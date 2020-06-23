@@ -1,4 +1,8 @@
 # Changelog
+## [0.2.0] - 2020-06-23
+### Added 
+- New API calls and workflow to manage SSH keys on the host
+### Changed
 ## [0.1.0] - 2020-03-13
 ### Added 
 - API endpoints for enabling and disabling MJPG streaming from USB devices
