@@ -18,7 +18,7 @@ COPY code/ /opt/nuvlabox/
 
 WORKDIR /opt/nuvlabox/
 
-RUN apk add --no-cache curl openssl=1.1.1d-r3 openssh=8.1_p1-r0
+RUN apk update && apk add --no-cache curl openssl openssh
 
 RUN pip install -r requirements.txt
 

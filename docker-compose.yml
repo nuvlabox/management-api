@@ -1,11 +1,15 @@
 version: "3.7"
 
+volumes:
+  nuvlabox-db:
+    driver: local
+
 services:
   management-api:
     build: .
     volumes:
       - /proc/sysrq-trigger:/sysrq
-      - ${HOME}/.ssh/authorized_keys:/rootfs/.ssh/authorized_keys
+      - ${HOME}/.ssh/:/hostfs/.ssh/
       - nuvlabox-db:/srv/nuvlabox/shared
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
@@ -15,6 +19,8 @@ services:
     environment:
       - NUVLA_ENDPOINT=${NUVLA_ENDPOINT:-nuvla.io}
       - NUVLA_ENDPOINT_INSECURE=False
+      - NUVLABOX_SSH_PUB_KEY=${NUVLABOX_SSH_PUB_KEY}
+      - HOST_USER=$USER
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001"]
       interval: 30s

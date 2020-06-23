@@ -55,17 +55,78 @@ def set_logger():
     root.addHandler(fh)
 
 
-def generate_ssh_key():
-    """ Create an SSH key, every time """
+def check_authorized_keys_file():
+    """ Makes the initial checks for SSH key management
+    Checks if the authorized keys file exists and gives back its content and path
+
+    :returns authorized_keys_file_content, authorized_keys_file_path: content and path of the authorized keys file"""
+
+    authorized_keys_file = "{}/authorized_keys".format(utils.host_ssh_folder)
+
+    if os.path.isfile(authorized_keys_file):
+        with open(authorized_keys_file) as akr:
+            authorized_keys = akr.read()
+    else:
+        authorized_keys = ''
+
+    return authorized_keys, authorized_keys_file
+
+
+def add_ssh_key(pubkey):
+    """ Adds a public SSH key to the host's root authorized keys
+
+    :param pubkey: string containing the full public key
+    """
 
     log = logging.getLogger("api")
 
-    log.info("Generating SSH keys for the NuvlaBox...")
-    os.system("echo 'y\n' | ssh-keygen -q -t rsa -N '' -f {} >/dev/null".format(utils.ssh_key_file))
-    public_key = "{}.pub".format(utils.ssh_key_file)
+    authorized_keys, authorized_keys_file = check_authorized_keys_file()
 
-    if not os.path.exists(utils.ssh_key_file) or not os.path.exists(public_key):
-        log.error("Cannot generate SSH key...will move on, but SSH will be unavailable until the NuvlaBox is restarted")
+    with open(authorized_keys_file, 'a+') as ak:
+        keys = pubkey.replace('\\n', '\n').splitlines()
+        for key in keys:
+            if key not in authorized_keys:
+                ak.write("\n{}\n".format(key))
+                log.info("SSH public key added to host user {}: {}".format(utils.ssh_user, key))
+            else:
+                log.info("SSH public key {} already added to host. Skipping it".format(key))
+
+
+def remove_ssh_key(pubkey):
+    """ Removes a public SSH key from the host's authorized keys
+
+    :param pubkey: string containing the full public key
+    """
+
+    log = logging.getLogger("api")
+
+    authorized_keys, authorized_keys_file = check_authorized_keys_file()
+
+    # in case the passed value has more than 1 public SSH key
+    revoke_keys = pubkey.replace('\\n', '\n').splitlines()
+    final_keys = authorized_keys.splitlines()
+    for key in revoke_keys:
+        if key in final_keys:
+            final_keys.remove(key)
+
+    if final_keys != authorized_keys.splitlines():
+        with open(authorized_keys_file, 'w') as ak:
+            ak.write("\n".join(final_keys))
+        log.info("SSH public key removed from host user {}: {}".format(utils.ssh_user, pubkey))
+    else:
+        log.info("The provided SSH public key {} is not in the host's authorized keys. Nothing to do".format(pubkey))
+
+
+def default_ssh_key():
+    """ Looks for the env var NUVLABOX_SSH_PUB_KEY, and add the respective
+     SSH public key to the host
+    """
+
+    log = logging.getLogger("api")
+
+    if utils.provided_pubkey:
+        log.info("Environment variable NUVLABOX_SSH_PUB_KEY found. Adding key to host user {}".format(utils.ssh_user))
+        add_ssh_key(utils.provided_pubkey)
 
 
 def wait_for_certificates():
@@ -75,10 +136,8 @@ def wait_for_certificates():
     log.info("Re-using compute-api SSL certificates for NuvlaBox Management API")
     log.info("Waiting for compute-api to generate SSL certificates...")
 
-    while not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_cert_file)) and \
-            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.client_key_file)) and \
+    while not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file)) or \
+            not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file)) or \
             not os.path.exists("{}/{}".format(utils.nuvlabox_api_certs_folder, utils.ca_file)):
 
         time.sleep(3)
@@ -121,6 +180,56 @@ def reboot():
     thread.start()
 
     return jsonify(dict(utils.return_200, message="rebooting NuvlaBox machine...")), utils.return_200['status']
+
+
+@app.route("/api/add-ssh-key", methods=['POST'])
+def accept_new_ssh_key():
+    # adds an SSH key into the host's authorized keys
+    # the payload is the public key is, raw
+    log = logging.getLogger("api")
+
+    payload = request.data.decode('UTF-8')
+
+    log.info("Received request to add public SSH key to host: {}".format(payload))
+
+    if not payload or not isinstance(payload, str):
+        return jsonify(dict(utils.return_400, message="Payload should match a valid public SSH key. Recevied: %s" %
+                            payload)), \
+               utils.return_400['status']
+
+    try:
+        add_ssh_key(payload)
+        return jsonify(dict(utils.return_200, message="Added public SSH key to host: {}".format(payload))), \
+               utils.return_200['status']
+    except Exception as e:
+        log.exception("Cannot add public SSH key to host: {}".format(e))
+
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+
+
+@app.route("/api/revoke-ssh-key", methods=['POST'])
+def revoke_ssh_key():
+    # removes the SSH public key passed in the payload,
+    # from the host's authorized keys
+    log = logging.getLogger("api")
+
+    payload = request.data.decode('UTF-8')
+
+    log.info("Received request to revoke public SSH key from host: {}".format(payload))
+
+    if not payload or not isinstance(payload, str):
+        return jsonify(dict(utils.return_400, message="Payload should match a valid public SSH key. Recevied: %s" %
+                                                      payload)), \
+               utils.return_400['status']
+
+    try:
+        remove_ssh_key(payload)
+        return jsonify(dict(utils.return_200, message="Removed SSH key from host: {}".format(payload))), \
+               utils.return_200['status']
+    except Exception as e:
+        log.exception("Cannot revoke public SSH key from host: {}".format(e))
+
+        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/enable", methods=['POST'])
@@ -223,11 +332,15 @@ if __name__ == "__main__":
     set_logger()
     log = logging.getLogger("api")
 
+    # Check if there is an SSH key to be added to the host
+    try:
+        default_ssh_key()
+    except:
+        # it is not critical if we can't add it, for any reason
+        log.exception("Could not add NUVLABOX_SSH_PUB_KEY to the host root. Moving on and discarding the provided key")
+
     # Let's re-use the certificates already generated for the compute-api
     wait_for_certificates()
-
-    # Generate SSH key
-    generate_ssh_key()
 
     workers = multiprocessing.cpu_count()
     logging.info("Starting NuvlaBox Management API!")
