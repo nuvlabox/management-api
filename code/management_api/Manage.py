@@ -124,14 +124,13 @@ def find_container_env_vars(container_name, keys=None):
         for k in keys:
             try:
                 var = list(filter(lambda x: f"{k}=" in x, env))[0]
-                env_map[var.split("=", 1)[0]] = var.split("=", 1)[1:]
+                env_map[var.split("=", 1)[0]] = var.split("=", 1)[1]
             except IndexError:
                 continue
     else:
         for env_var in env:
-            env_map[env_var.split("=", 1)[0]] = env_var.split("=", 1)[1:]
+            env_map[env_var.split("=", 1)[0]] = env_var.split("=", 1)[1]
 
-    print(env_map)
     return env_map
 
 
