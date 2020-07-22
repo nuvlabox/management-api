@@ -131,6 +131,7 @@ def find_container_env_vars(container_name, keys=None):
         for env_var in env:
             env_map[env_var.split("=", 1)[0]] = env_var.split("=", 1)[1:]
 
+    print(env_map)
     return env_map
 
 
