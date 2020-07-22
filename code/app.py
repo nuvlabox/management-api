@@ -361,7 +361,7 @@ def restart_data_source_mjpg():
 
     name = payload['id'].split("/")[-1]
 
-    get_env = Manage.find_container_env_vars(name, ["RESOLUTION", "FPS"])
+    get_env = Manage.find_container_env_vars(name, keys=["RESOLUTION", "FPS"])
     resolution = get_env.get("RESOLUTION", "1280x720")
     fps = get_env.get("FPS", 15)
 
