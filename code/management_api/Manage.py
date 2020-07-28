@@ -68,7 +68,8 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
                                                 devices=devices,
                                                 labels=labels,
                                                 network="nuvlabox-shared-network",
-                                                restart_policy={"Name": "always"}
+                                                restart_policy={"Name": "always"},
+                                                environment=[f"RESOLUTION={resolution}", f"FPS={fps}"]
                                                 )
 
 
@@ -98,6 +99,39 @@ def nuvla_api():
     api.login_apikey(user_info['api-key'], user_info['secret-key'])
 
     return api
+
+
+def find_container_env_vars(container_name, keys=None):
+    """ Inspects a container and looks up its environment variables
+    If the arg keys is passed, it then looks up the values for those keys. Otherwise, it returns the full env
+
+    :param container_name: container to be inspected
+    :param keys: list of env vars to look up. If not passed, it will look up the whole environment
+    :returns {key1: value1, key2: value2} - a map of the provided keys and respective values in the container env
+    """
+
+    client = docker.from_env()
+
+    insp = client.api.inspect_container(container_name)
+
+    try:
+        env = insp['Config']['Env']
+    except KeyError:
+        env = []
+
+    env_map = {}
+    if keys:
+        for k in keys:
+            try:
+                var = list(filter(lambda x: f"{k}=" in x, env))[0]
+                env_map[var.split("=", 1)[0]] = var.split("=", 1)[1]
+            except IndexError:
+                continue
+    else:
+        for env_var in env:
+            env_map[env_var.split("=", 1)[0]] = env_var.split("=", 1)[1]
+
+    return env_map
 
 
 def update_peripheral_resource(id, local_data_gateway_endpoint=None, data_gateway_enabled=True, raw_sample=None):
