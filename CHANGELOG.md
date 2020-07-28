@@ -1,4 +1,9 @@
 # Changelog
+## [0.3.0] - 2020-07-28
+### Added 
+- new API call for restarting a video stream
+### Changed
+- refactored functions that are re-used in multiple API calls
 ## [0.2.0] - 2020-06-23
 ### Added 
 - New API calls and workflow to manage SSH keys on the host
