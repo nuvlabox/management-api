@@ -6,7 +6,7 @@
     <groupId>sixsq.nuvlabox.management-api</groupId>
     <artifactId>management-api</artifactId>
     <packaging>pom</packaging>
-    <version>0.3.0</version>
+    <version>0.3.1-SNAPSHOT</version>
     <name>management-api</name>
     <url>http://sixsq.com/</url>
 
