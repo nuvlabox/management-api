@@ -1,4 +1,8 @@
 # Changelog
+## [0.3.1] - 2020-08-10
+### Added
+### Changed
+- removed file logging
 ## [0.3.0] - 2020-07-28
 ### Added 
 - new API call for restarting a video stream
