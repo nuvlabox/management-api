@@ -37,10 +37,6 @@ def set_logger():
     root = logging.getLogger("api")
     root.setLevel(logging.DEBUG)
 
-    # log into file
-    fh = logging.FileHandler("{}/{}".format(utils.data_volume, utils.log_filename))
-    fh.setLevel(logging.ERROR)
-
     # print to console
     c_handler = logging.StreamHandler(sys.stdout)
     c_handler.setLevel(logging.DEBUG)
@@ -48,11 +44,9 @@ def set_logger():
     # format log messages
     formatter = logging.Formatter('%(levelname)s - %(funcName)s - %(message)s')
     c_handler.setFormatter(formatter)
-    fh.setFormatter(formatter)
 
     # add handlers
     root.addHandler(c_handler)
-    root.addHandler(fh)
 
 
 def check_authorized_keys_file():
