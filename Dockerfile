@@ -14,7 +14,7 @@ LABEL git.build.time=${GIT_BUILD_TIME}
 LABEL travis.build.number=${TRAVIS_BUILD_NUMBER}
 LABEL travis.build.web.url=${TRAVIS_BUILD_WEB_URL}
 
-COPY code/ /opt/nuvlabox/
+COPY code/ LICENSE /opt/nuvlabox/
 
 WORKDIR /opt/nuvlabox/
 
@@ -23,5 +23,7 @@ RUN apk update && apk add --no-cache curl openssl openssh
 RUN pip install -r requirements.txt
 
 VOLUME /srv/nuvlabox/shared
+
+ONBUILD RUN ./license.sh
 
 ENTRYPOINT ["./app.py"]
