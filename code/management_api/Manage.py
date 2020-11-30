@@ -87,8 +87,25 @@ def stop_container_data_source_mjpg(name):
 
 def nuvla_api():
     """ Initialize API instance """
-    api = Api(endpoint='https://{}'.format(utils.nuvla_endpoint),
-              insecure=utils.nuvla_endpoint_insecure, reauthenticate=True)
+    if os.path.exists(utils.nuvla_configuration):
+        nuvla_endpoint_raw = nuvla_endpoint_insecure_raw = None
+        with open(utils.nuvla_configuration) as nuvla_conf:
+            for line in nuvla_conf.read().split():
+                try:
+                    if line and 'NUVLA_ENDPOINT' in line:
+                        nuvla_endpoint_raw = line.split('=')[-1]
+                    if line and 'NUVLA_ENDPOINT_INSECURE' in line:
+                        nuvla_endpoint_insecure_raw = bool(line.split('=')[-1])
+                except IndexError:
+                    pass
+
+        if nuvla_endpoint_raw and nuvla_endpoint_insecure_raw:
+            api = Api(endpoint='https://{}'.format(nuvla_endpoint_raw),
+                      insecure=nuvla_endpoint_insecure_raw, reauthenticate=True)
+        else:
+            raise Exception(f'Misconfigured Nuvla parameters in {utils.nuvla_configuration}. Cannot perform operation')
+    else:
+        raise Exception("NuvlaBox is not yet ready to be operated. Missing Nuvla configuration parameters")
 
     try:
         with open(utils.activation_flag) as a:
