@@ -1,4 +1,9 @@
 # Changelog
+## [0.4.0] - 2020-12-04
+        ### Added 
+                  - re-use persisted env vars
+        ### Changed
+                  - minor fixes
 ## [0.3.2] - 2020-10-02
 ### Added 
 - ONBUILD SixSq license dump
