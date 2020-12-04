@@ -6,27 +6,28 @@
 
 import os
 
-nuvla_endpoint_raw = os.environ["NUVLA_ENDPOINT"] if "NUVLA_ENDPOINT" in os.environ else "nuvla.io"
-while nuvla_endpoint_raw[-1] == "/":
-    nuvla_endpoint_raw = nuvla_endpoint_raw[:-1]
-
-nuvla_endpoint_insecure_raw = os.environ["NUVLA_ENDPOINT_INSECURE"] if "NUVLA_ENDPOINT_INSECURE" in os.environ else False
-if isinstance(nuvla_endpoint_insecure_raw, str):
-    if nuvla_endpoint_insecure_raw.lower() == "false":
-        nuvla_endpoint_insecure_raw = False
-    else:
-        nuvla_endpoint_insecure_raw = True
-else:
-    nuvla_endpoint_insecure_raw = bool(nuvla_endpoint_insecure_raw)
-
-nuvla_endpoint_insecure = nuvla_endpoint_insecure_raw
-
-nuvla_endpoint = nuvla_endpoint_raw.replace("https://", "")
+# nuvla_endpoint_raw = os.environ["NUVLA_ENDPOINT"] if "NUVLA_ENDPOINT" in os.environ else "nuvla.io"
+# while nuvla_endpoint_raw[-1] == "/":
+#     nuvla_endpoint_raw = nuvla_endpoint_raw[:-1]
+#
+# nuvla_endpoint_insecure_raw = os.environ["NUVLA_ENDPOINT_INSECURE"] if "NUVLA_ENDPOINT_INSECURE" in os.environ else False
+# if isinstance(nuvla_endpoint_insecure_raw, str):
+#     if nuvla_endpoint_insecure_raw.lower() == "false":
+#         nuvla_endpoint_insecure_raw = False
+#     else:
+#         nuvla_endpoint_insecure_raw = True
+# else:
+#     nuvla_endpoint_insecure_raw = bool(nuvla_endpoint_insecure_raw)
+#
+# nuvla_endpoint_insecure = nuvla_endpoint_insecure_raw
+#
+# nuvla_endpoint = nuvla_endpoint_raw.replace("https://", "")
 
 data_volume = "/srv/nuvlabox/shared"
 log_filename = "management-api.log"
 
 activation_flag = "{}/.activated".format(data_volume)
+nuvla_configuration = f'{data_volume}/.nuvla-configuration'
 
 server_cert_file = "server-cert.pem"
 server_key_file = "server-key.pem"
