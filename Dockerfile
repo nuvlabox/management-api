@@ -20,7 +20,7 @@ RUN apk update && apk add --no-cache curl openssl openssh tini
 
 RUN pip install -r requirements.txt
 
-HEALTHCHECK --interval=10s \
+HEALTHCHECK --interval=20s \
   CMD curl -k https://$(route -n | grep 'UG[ \t]' | awk '{print $2}'):5001 2>&1 | grep SSL || (kill `pgrep tini` && exit 1)
 
 VOLUME /srv/nuvlabox/shared
