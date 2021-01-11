@@ -207,8 +207,10 @@ def accept_new_ssh_key():
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot add public SSH key to host: {}".format(e))
-
-        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+        if e.status_code:
+            return jsonify(dict(utils.return_500, message=str(e), status=e.status_code)), e.status_code
+        else:
+            return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/revoke-ssh-key", methods=['POST'])
@@ -230,8 +232,10 @@ def revoke_ssh_key():
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot revoke public SSH key from host: {}".format(e))
-
-        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+        if e.status_code:
+            return jsonify(dict(utils.return_500, message=str(e), status=e.status_code)), e.status_code
+        else:
+            return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/enable", methods=['POST'])
@@ -301,8 +305,10 @@ def disable_data_source_mjpg():
                utils.return_200['status']
     except Exception as e:
         log.exception("Cannot disable stream: {}".format(e))
-
-        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+        if e.status_code:
+            return jsonify(dict(utils.return_500, message=str(e), status=e.status_code)), e.status_code
+        else:
+            return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/restart", methods=['POST'])
@@ -339,8 +345,10 @@ def restart_data_source_mjpg():
             return jsonify(dict(utils.return_400, message=container_logs)), utils.return_400['status']
     except Exception as e:
         log.exception("Cannot restart stream (old streamer might be in a faulty state): {}".format(e))
-
-        return jsonify(dict(utils.return_500, message=str(e))), utils.return_400['status']
+        if e.status_code:
+            return jsonify(dict(utils.return_500, message=str(e), status=e.status_code)), e.status_code
+        else:
+            return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 if __name__ == "__main__":
