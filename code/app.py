@@ -11,7 +11,6 @@ Arguments:
 """
 
 import logging
-import sys
 import os
 import subprocess
 import multiprocessing
@@ -30,23 +29,8 @@ __email__ = "support@sixsq.com"
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-
-def set_logger():
-    """ Configures logging """
-    # give logger a name: app
-    root = logging.getLogger("api")
-    root.setLevel(logging.DEBUG)
-
-    # print to console
-    c_handler = logging.StreamHandler(sys.stdout)
-    c_handler.setLevel(logging.DEBUG)
-
-    # format log messages
-    formatter = logging.Formatter('%(levelname)s - %(funcName)s - %(message)s')
-    c_handler.setFormatter(formatter)
-
-    # add handlers
-    root.addHandler(c_handler)
+logging.basicConfig(format='%(levelname)s - %(funcName)s - %(message)s', level='INFO')
+log = logging.getLogger(__name__)
 
 
 def check_authorized_keys_file():
@@ -72,8 +56,6 @@ def add_ssh_key(pubkey):
     :param pubkey: string containing the full public key
     """
 
-    log = logging.getLogger("api")
-
     authorized_keys, authorized_keys_file = check_authorized_keys_file()
 
     with open(authorized_keys_file, 'a+') as ak:
@@ -91,8 +73,6 @@ def remove_ssh_key(pubkey):
 
     :param pubkey: string containing the full public key
     """
-
-    log = logging.getLogger("api")
 
     authorized_keys, authorized_keys_file = check_authorized_keys_file()
 
@@ -116,8 +96,6 @@ def default_ssh_key():
      SSH public key to the host
     """
 
-    log = logging.getLogger("api")
-
     if utils.provided_pubkey:
         log.info("Environment variable NUVLABOX_SSH_PUB_KEY found. Adding key to host user {}".format(utils.ssh_user))
         add_ssh_key(utils.provided_pubkey)
@@ -126,7 +104,6 @@ def default_ssh_key():
 def wait_for_certificates():
     """ If there are already TLS credentials for the compute-api, then re-use them """
 
-    log = logging.getLogger("api")
     log.info("Re-using compute-api SSL certificates for NuvlaBox Management API")
     log.info("Waiting for compute-api to generate SSL certificates...")
 
@@ -138,7 +115,6 @@ def wait_for_certificates():
 
 
 def request_stop_mjpg_streamer_container(name, nuvla_resource_id):
-    log = logging.getLogger("api")
     log.info("Stopping container {}".format(name))
     Manage.stop_container_data_source_mjpg(name)
     try:
@@ -151,13 +127,12 @@ def request_stop_mjpg_streamer_container(name, nuvla_resource_id):
             # so it's normal that it does not exist anymore
             pass
         else:
-            logging.exception("Could not update {} in Nuvla. Trying a second time...".format(nuvla_resource_id))
+            log.exception("Could not update {} in Nuvla. Trying a second time...".format(nuvla_resource_id))
             # try again. If still fails, then raise the exception
             Manage.update_peripheral_resource(nuvla_resource_id, data_gateway_enabled=False)
 
 
 def request_start_mjpg_streamer_container(name, nuvla_resource_id, device, resolution, fps):
-    log = logging.getLogger("api")
     log.info("Launching MJPG streamer container {} for {}".format(name, device))
     local_data_gateway_endpoint, container = Manage.start_container_data_source_mjpg(name,
                                                                                      device,
@@ -217,8 +192,6 @@ def reboot():
 def accept_new_ssh_key():
     # adds an SSH key into the host's authorized keys
     # the payload is the public key is, raw
-    log = logging.getLogger("api")
-
     payload = request.data.decode('UTF-8')
 
     log.info("Received request to add public SSH key to host: {}".format(payload))
@@ -242,8 +215,6 @@ def accept_new_ssh_key():
 def revoke_ssh_key():
     # removes the SSH public key passed in the payload,
     # from the host's authorized keys
-    log = logging.getLogger("api")
-
     payload = request.data.decode('UTF-8')
 
     log.info("Received request to revoke public SSH key from host: {}".format(payload))
@@ -269,8 +240,6 @@ def enable_data_source_mjpg():
     #
     # payload looks like:
     # { "id": str, "resolution": str, "fps": int, "video-device": str }
-    log = logging.getLogger("api")
-
     payload = json.loads(request.data)
     mandatory_keys = {"id", "video-device"}
 
@@ -314,8 +283,6 @@ def disable_data_source_mjpg():
     #
     # payload looks like:
     # { "id": str }
-    log = logging.getLogger("api")
-
     payload = json.loads(request.data)
     mandatory_keys = {"id"}
 
@@ -344,8 +311,6 @@ def restart_data_source_mjpg():
     #
     # payload looks like:
     # { "id": str, "video-device": str }
-    log = logging.getLogger("api")
-
     payload = json.loads(request.data)
     mandatory_keys = {"id", "video-device"}
 
@@ -381,9 +346,6 @@ def restart_data_source_mjpg():
 if __name__ == "__main__":
     """ Main """
 
-    set_logger()
-    log = logging.getLogger("api")
-
     # Check if there is an SSH key to be added to the host
     try:
         default_ssh_key()
@@ -395,7 +357,7 @@ if __name__ == "__main__":
     wait_for_certificates()
 
     workers = multiprocessing.cpu_count()
-    logging.info("Starting NuvlaBox Management API!")
+    log.info("Starting NuvlaBox Management API!")
     try:
         subprocess.check_output(["gunicorn", "--bind=0.0.0.0:5001", "--threads=2",
                                  "--worker-class=gthread", "--workers={}".format(workers), "--reload",
@@ -405,9 +367,10 @@ if __name__ == "__main__":
                                  "--cert-reqs", "2", "--no-sendfile", "--log-level", "info",
                                  "wsgi:app"])
     except FileNotFoundError:
-        logging.exception("Gunicorn not available!")
+        log.exception("Gunicorn not available!")
         raise
     except (OSError, subprocess.CalledProcessError):
-        logging.exception("Failed start NuvlaBox Management API!")
+        log.exception("Failed start NuvlaBox Management API!")
+        log.exception("Failed start NuvlaBox Management API!")
         raise
 
