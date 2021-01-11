@@ -83,7 +83,10 @@ def stop_container_data_source_mjpg(name):
     """
     client = docker.from_env()
 
-    client.containers.get(name).remove(force=True)
+    try:
+        client.containers.get(name).remove(force=True)
+    except docker.errors.NotFound:
+        pass
 
 
 def nuvla_api():
