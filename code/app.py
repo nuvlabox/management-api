@@ -277,8 +277,10 @@ def enable_data_source_mjpg():
             return jsonify(dict(utils.return_400, message=container_logs)), utils.return_400['status']
     except Exception as e:
         log.exception("Cannot enable stream: {}".format(e))
-
-        return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
+        if e.status_code:
+            return jsonify(dict(utils.return_500, message=str(e), status=e.status_code)), e.status_code
+        else:
+            return jsonify(dict(utils.return_500, message=str(e))), utils.return_500['status']
 
 
 @app.route("/api/data-source-mjpg/disable", methods=['POST'])
