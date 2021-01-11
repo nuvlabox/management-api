@@ -12,7 +12,7 @@ from nuvla.api import Api
 
 # TODO: is there a way to avoid fixing a tag? If a new tag comes out, we need to update this microservice
 data_gateway_images = {
-    "data_source_mjpg": "nuvlabox/data-source-mjpg:0.0.1"
+    "data_source_mjpg": "nuvlabox/data-source-mjpg:0.0.2"
 }
 
 
@@ -65,6 +65,7 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
                                                 command=cmd,
                                                 detach=True,
                                                 name=name,
+                                                hostname=name,
                                                 devices=devices,
                                                 labels=labels,
                                                 network="nuvlabox-shared-network",
