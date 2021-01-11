@@ -356,15 +356,14 @@ if __name__ == "__main__":
     # Let's re-use the certificates already generated for the compute-api
     wait_for_certificates()
 
-    workers = multiprocessing.cpu_count()
     log.info("Starting NuvlaBox Management API!")
     try:
         subprocess.check_output(["gunicorn", "--bind=0.0.0.0:5001", "--threads=2",
-                                 "--worker-class=gthread", "--workers={}".format(workers), "--reload",
+                                 "--worker-class=gthread", "--workers=1", "--reload",
                                  "--keyfile", "{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_key_file),
                                  "--certfile", "{}/{}".format(utils.nuvlabox_api_certs_folder, utils.server_cert_file),
                                  "--ca-certs", "{}/{}".format(utils.nuvlabox_api_certs_folder, utils.ca_file),
-                                 "--cert-reqs", "2", "--no-sendfile", "--log-level", "info",
+                                 "--cert-reqs", "2", "--no-sendfile",
                                  "wsgi:app"])
     except FileNotFoundError:
         log.exception("Gunicorn not available!")
