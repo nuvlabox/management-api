@@ -1,4 +1,8 @@
 # Changelog
+## [1.1.1] - 2021-01-12
+### Added
+### Changed
+ - ensure existing streaming containers are deleted on duplicated requests
 ## [1.1.0] - 2021-01-12
 ### Added 
  - upgraded data-source-mjpg container 
