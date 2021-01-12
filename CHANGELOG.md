@@ -1,4 +1,10 @@
 # Changelog
+## [1.1.0] - 2021-01-12
+### Added 
+ - upgraded data-source-mjpg container 
+ - additional logging
+### Changed
+ - reduced number of api workers
 ## [1.0.0] - 2021-01-08
 ### Added 
  - auto-restart on docker-proxy failure
