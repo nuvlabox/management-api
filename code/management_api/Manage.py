@@ -57,6 +57,8 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
               "{}.entrypoints".format(traefik_router_name): "web",
               "{}.middlewares".format(traefik_router_name): "{}-mid".format(name),
               "traefik.http.services.mjpg-streamer-{}-service.loadbalancer.server.port".format(name): "8082",
+              "traefik.http.services.mjpg-streamer-{}-service.loadbalancer.healthcheck.path".format(name): "/",
+              "traefik.http.services.mjpg-streamer-{}-service.loadbalancer.healthcheck.port".format(name): "8082",
               "traefik.http.middlewares.{}-mid.replacepath.path".format(name): "/"
               }
 
