@@ -40,6 +40,18 @@ def start_container_data_source_mjpg(name, video_device, resolution, fps):
     """
     client = docker.from_env()
 
+    try:
+        existing_container = client.containers.get(name)
+        if existing_container:
+            # we force kill any previous container, if there's a new request for the same streamer
+            existing_container.remove(force=True)
+    except docker.errors.NotFound:
+        # this is good, the container shouldn't exist
+        pass
+    except:
+        # better not move forward, as it can cause zombie containers
+        raise
+
     cmd = '--input-type input_uvc.so --device-path {} --resolution {} --fps {}'.format(video_device,
                                                                                        resolution,
                                                                                        fps)
