@@ -1,4 +1,8 @@
 # Changelog
+## [1.2.0] - 2021-02-12
+### Added
+### Changed
+ - deprecate HOST_USER in favor of HOME
 ## [1.1.1] - 2021-01-12
 ### Added
 ### Changed
