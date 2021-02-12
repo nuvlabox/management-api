@@ -40,8 +40,8 @@ nuvlabox_api_certs_folder = data_volume
 provided_pubkey = os.getenv("NUVLABOX_SSH_PUB_KEY")
 host_ssh_folder = "/hostfs/.ssh"
 
-host_user = os.getenv("HOST_USER")
-ssh_user = host_user if host_user else "root"
+host_home_user = os.getenv("HOST_USER", os.getenv('HOME'))
+ssh_user = host_home_user if host_home_user else "root"
 
 return_404 = {"status": 404,
               "message": "undefined"}
